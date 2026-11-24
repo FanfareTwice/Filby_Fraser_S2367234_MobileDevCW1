@@ -17,9 +17,11 @@ import com.google.android.material.card.MaterialCardView;
 
 import org.me.gcu.filby_fraser_s2367234.R;
 import org.me.gcu.filby_fraser_s2367234.model.Situation;
+import org.me.gcu.filby_fraser_s2367234.util.GeoUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class SituationAdapter extends ListAdapter<Situation, SituationAdapter.Holder> {
@@ -28,10 +30,16 @@ public class SituationAdapter extends ListAdapter<Situation, SituationAdapter.Ho
 
     private final OnSituationClick listener;
     private String selectedKey;
+    private MainViewModel.SearchOrigin origin;   // distance is shown when set
 
     public SituationAdapter(OnSituationClick listener) {
         super(DIFF);
         this.listener = listener;
+    }
+
+    public void setOrigin(MainViewModel.SearchOrigin origin) {
+        this.origin = origin;
+        notifyItemRangeChanged(0, getItemCount());
     }
 
     public void setSelectedKey(String key) {
@@ -72,6 +80,10 @@ public class SituationAdapter extends ListAdapter<Situation, SituationAdapter.Ho
             if (d != null) meta.add(d);
         } else if (s.getStartTime() != null) {
             meta.add("Since " + SituationStyle.formatTime(s.getStartTime()));
+        }
+        if (origin != null) {
+            double km = GeoUtils.distanceToSituationKm(origin.lat, origin.lon, s);
+            if (km < Double.MAX_VALUE) meta.add(String.format(Locale.UK, "%.1f km away", km));
         }
         h.meta.setText(String.join("  •  ", meta));
 

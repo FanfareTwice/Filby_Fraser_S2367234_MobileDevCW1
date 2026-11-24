@@ -56,4 +56,10 @@
         android:padding="4dp"
         android:text="@string/acknowledgement"
         android:textAppearance="?attr/textAppearanceLabelSmall" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/nav_menu" />
 </LinearLayout>

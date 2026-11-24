@@ -19,4 +19,25 @@
 
     <string name="detail_placeholder">Select a situation to see its details</string>
     <string name="close">Close</string>
+
+    <string name="nav_list">Situations</string>
+    <string name="nav_search">Search</string>
+
+    <string name="search_by_road">By road</string>
+    <string name="search_nearby">Nearby</string>
+    <string name="road_hint">Road, e.g. M8 or A9</string>
+    <string name="search">Search</string>
+    <string name="use_my_location">Use my location (coarse)</string>
+    <string name="searching_from">Searching from: %1$s</string>
+    <string name="within_km">Within %1$d km</string>
+    <string name="distance_slider_desc">Search distance in kilometres</string>
+    <string name="my_location">My location</string>
+    <string name="location_denied">Location permission refused – using the fixed location instead</string>
+    <string name="location_unavailable">Location is turned off – using the fixed location instead</string>
+    <string name="location_waiting">Getting your location…</string>
+    <string name="search_hint_text">Enter a road name to search</string>
+    <plurals name="results_found">
+        <item quantity="one">%1$d situation found</item>
+        <item quantity="other">%1$d situations found</item>
+    </plurals>
 </resources>

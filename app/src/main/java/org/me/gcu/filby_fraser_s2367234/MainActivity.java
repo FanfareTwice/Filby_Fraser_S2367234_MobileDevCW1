@@ -20,14 +20,17 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.me.gcu.filby_fraser_s2367234.data.LoadStatus;
 import org.me.gcu.filby_fraser_s2367234.ui.DetailFragment;
 import org.me.gcu.filby_fraser_s2367234.ui.MainViewModel;
+import org.me.gcu.filby_fraser_s2367234.ui.SearchFragment;
 import org.me.gcu.filby_fraser_s2367234.ui.SituationListFragment;
 
 // Single activity; each screen is a fragment that shares MainViewModel
@@ -58,10 +61,21 @@ public class MainActivity extends AppCompatActivity {
         // On rotation the fragment manager restores the fragment itself
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.main_container, new SituationListFragment())
                     .replace(R.id.detail_container, new DetailFragment())
                     .commit();
         }
+
+        NavigationBarView navigation = findViewById(R.id.navigation);
+        navigation.setOnItemSelectedListener(item -> {
+            viewModel.setTab(item.getItemId() == R.id.nav_search
+                    ? MainViewModel.Tab.SEARCH : MainViewModel.Tab.LIST);
+            return true;
+        });
+        viewModel.getCurrentTab().observe(this, tab -> {
+            showTab(tab);
+            int id = tab == MainViewModel.Tab.SEARCH ? R.id.nav_search : R.id.nav_list;
+            if (navigation.getSelectedItemId() != id) navigation.setSelectedItemId(id);
+        });
 
         // In portrait the details cover the list, so Back closes them first
         boolean twoPane = getResources().getBoolean(R.bool.two_pane);
@@ -93,6 +107,16 @@ public class MainActivity extends AppCompatActivity {
             }
             statusText.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, colour)));
         });
+    }
+
+    private void showTab(MainViewModel.Tab tab) {
+        String tag = tab.name();
+        if (getSupportFragmentManager().findFragmentByTag(tag) != null) return;  // already showing
+        Fragment f = tab == MainViewModel.Tab.SEARCH ? new SearchFragment() : new SituationListFragment();
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.main_container, f, tag)
+                .commit();
     }
 
     @Override
