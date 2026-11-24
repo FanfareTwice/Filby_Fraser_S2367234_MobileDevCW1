@@ -22,6 +22,7 @@ import org.me.gcu.filby_fraser_s2367234.model.Impact;
 import org.me.gcu.filby_fraser_s2367234.model.LocationPoint;
 import org.me.gcu.filby_fraser_s2367234.model.Situation;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -56,9 +57,17 @@ public class DetailFragment extends Fragment {
         delayChip = view.findViewById(R.id.detail_delay);
         sections = view.findViewById(R.id.detail_sections);
         MaterialButton close = view.findViewById(R.id.detail_close);
+        MaterialButton showOnMap = view.findViewById(R.id.detail_show_map);
 
         close.setVisibility(twoPane ? View.GONE : View.VISIBLE);
         close.setOnClickListener(v -> vm.clearSelection());
+
+        showOnMap.setOnClickListener(v -> {
+            Situation s = vm.getSelected().getValue();
+            if (s == null) return;
+            vm.showOnMap(Collections.singletonList(s), s.getTitle());
+            if (!twoPane) vm.clearSelection();   // portrait: reveal the map underneath
+        });
 
 
         vm.getSelected().observe(getViewLifecycleOwner(), this::show);

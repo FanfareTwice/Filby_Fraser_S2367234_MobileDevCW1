@@ -2,4 +2,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/nav_list" android:icon="@drawable/ic_nav_list" android:title="@string/nav_list" />
     <item android:id="@+id/nav_search" android:icon="@drawable/ic_nav_search" android:title="@string/nav_search" />
+    <item android:id="@+id/nav_map" android:icon="@drawable/ic_nav_map" android:title="@string/nav_map" />
 </menu>

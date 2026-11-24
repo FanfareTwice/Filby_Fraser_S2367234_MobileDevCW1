@@ -1,10 +1,15 @@
 package org.me.gcu.filby_fraser_s2367234.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import org.me.gcu.filby_fraser_s2367234.R;
 import org.me.gcu.filby_fraser_s2367234.model.Impact;
@@ -104,5 +109,28 @@ public final class SituationStyle {
         if (days > 0) return days + (days == 1 ? " day" : " days") + (hours > 0 ? " " + hours + " h" : "");
         if (hours > 0) return hours + " h" + (mins > 0 ? " " + mins + " min" : "");
         return mins + " min";
+    }
+
+    // White icon on a coloured circle, used for map markers
+    public static Bitmap markerBitmap(Context c, Situation s, int sizePx) {
+        Bitmap bmp = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        float r = sizePx / 2f;
+
+        paint.setColor(0xFFFFFFFF);
+        canvas.drawCircle(r, r, r, paint);
+        paint.setColor(colourFor(c, s.getType()));
+        canvas.drawCircle(r, r, r * 0.86f, paint);
+
+        Drawable icon = ContextCompat.getDrawable(c, iconFor(s.getType()));
+        if (icon != null) {
+            icon = DrawableCompat.wrap(icon.mutate());
+            DrawableCompat.setTint(icon, 0xFFFFFFFF);
+            int pad = Math.round(sizePx * 0.24f);
+            icon.setBounds(pad, pad, sizePx - pad, sizePx - pad);
+            icon.draw(canvas);
+        }
+        return bmp;
     }
 }

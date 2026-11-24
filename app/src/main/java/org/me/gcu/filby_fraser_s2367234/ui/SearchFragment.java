@@ -29,6 +29,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
@@ -79,6 +80,7 @@ public class SearchFragment extends Fragment {
         TextView originLabel = view.findViewById(R.id.origin_label);
         useLocationSwitch = view.findViewById(R.id.use_location);
         TextView resultCount = view.findViewById(R.id.result_count);
+        MaterialButton mapButton = view.findViewById(R.id.show_results_map);
         RecyclerView recycler = view.findViewById(R.id.results);
 
         SituationAdapter adapter = new SituationAdapter(vm::select);
@@ -157,8 +159,19 @@ public class SearchFragment extends Fragment {
             resultCount.setText(hasQuery
                     ? getResources().getQuantityString(R.plurals.results_found, n, n)
                     : getString(R.string.search_hint_text));
+            mapButton.setEnabled(n > 0);
         });
 
+
+        mapButton.setOnClickListener(v -> {
+            List<Situation> results = vm.getSearchResults().getValue();
+            if (results == null || results.isEmpty()) return;
+            String title = vm.getSearchMode().getValue() == MainViewModel.SearchMode.ROAD
+                    ? getString(R.string.map_title_road, vm.getRoadQuery().getValue())
+                    : getString(R.string.map_title_distance, vm.getDistanceKm().getValue(),
+                        vm.getOrigin().getValue().label);
+            vm.showOnMap(results, title);
+        });
     }
 
     // Use the last known location straight away if it is recent, and ask every

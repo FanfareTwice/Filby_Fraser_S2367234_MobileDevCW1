@@ -22,6 +22,13 @@
 
     <string name="nav_list">Situations</string>
     <string name="nav_search">Search</string>
+    <string name="nav_map">Map</string>
+
+    <string name="show_on_map">Show on map</string>
+    <string name="map_title_road">situations on the %1$s</string>
+    <string name="map_title_distance">situations within %1$d km of %2$s</string>
+    <string name="map_showing">Showing %1$s</string>
+    <string name="show_all">Show all</string>
 
     <string name="search_by_road">By road</string>
     <string name="search_nearby">Nearby</string>

@@ -32,6 +32,7 @@ import org.me.gcu.filby_fraser_s2367234.ui.DetailFragment;
 import org.me.gcu.filby_fraser_s2367234.ui.MainViewModel;
 import org.me.gcu.filby_fraser_s2367234.ui.SearchFragment;
 import org.me.gcu.filby_fraser_s2367234.ui.SituationListFragment;
+import org.me.gcu.filby_fraser_s2367234.ui.TrafficMapFragment;
 
 // Single activity; each screen is a fragment that shares MainViewModel
 public class MainActivity extends AppCompatActivity {
@@ -66,14 +67,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         NavigationBarView navigation = findViewById(R.id.navigation);
+        // In portrait the details cover the tabs, so changing tab closes them
         navigation.setOnItemSelectedListener(item -> {
-            viewModel.setTab(item.getItemId() == R.id.nav_search
-                    ? MainViewModel.Tab.SEARCH : MainViewModel.Tab.LIST);
+            closeDetailsIfCovering();
+            viewModel.setTab(tabFor(item.getItemId()));
             return true;
         });
+        navigation.setOnItemReselectedListener(item -> closeDetailsIfCovering());
         viewModel.getCurrentTab().observe(this, tab -> {
             showTab(tab);
-            int id = tab == MainViewModel.Tab.SEARCH ? R.id.nav_search : R.id.nav_list;
+            int id = menuIdFor(tab);
             if (navigation.getSelectedItemId() != id) navigation.setSelectedItemId(id);
         });
 
@@ -109,14 +112,37 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void closeDetailsIfCovering() {
+        if (!getResources().getBoolean(R.bool.two_pane)) viewModel.clearSelection();
+    }
+
     private void showTab(MainViewModel.Tab tab) {
         String tag = tab.name();
         if (getSupportFragmentManager().findFragmentByTag(tag) != null) return;  // already showing
-        Fragment f = tab == MainViewModel.Tab.SEARCH ? new SearchFragment() : new SituationListFragment();
+        Fragment f;
+        switch (tab) {
+            case SEARCH: f = new SearchFragment(); break;
+            case MAP: f = new TrafficMapFragment(); break;
+            default: f = new SituationListFragment(); break;
+        }
         getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
                 .replace(R.id.main_container, f, tag)
                 .commit();
+    }
+
+    private static MainViewModel.Tab tabFor(int menuId) {
+        if (menuId == R.id.nav_search) return MainViewModel.Tab.SEARCH;
+        if (menuId == R.id.nav_map) return MainViewModel.Tab.MAP;
+        return MainViewModel.Tab.LIST;
+    }
+
+    private static int menuIdFor(MainViewModel.Tab tab) {
+        switch (tab) {
+            case SEARCH: return R.id.nav_search;
+            case MAP: return R.id.nav_map;
+            default: return R.id.nav_list;
+        }
     }
 
     @Override

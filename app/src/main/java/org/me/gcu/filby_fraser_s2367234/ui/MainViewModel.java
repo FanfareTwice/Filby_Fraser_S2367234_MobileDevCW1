@@ -22,7 +22,7 @@ import java.util.TreeSet;
 
 public class MainViewModel extends AndroidViewModel {
 
-    public enum Tab { LIST, SEARCH }
+    public enum Tab { LIST, SEARCH, MAP }
     public enum Filter { ALL, INCIDENTS, ROADWORKS }
     public enum SearchMode { ROAD, DISTANCE }
 
@@ -39,6 +39,11 @@ public class MainViewModel extends AndroidViewModel {
     private final MutableLiveData<SearchOrigin> origin = new MutableLiveData<>(defaultOrigin());
     private final MediatorLiveData<List<Situation>> searchResults = new MediatorLiveData<>();
     private final MediatorLiveData<List<String>> roadNames = new MediatorLiveData<>();
+
+    // Map shows either every situation or a selection (null = everything)
+    private final MutableLiveData<List<Situation>> mapSelection = new MutableLiveData<>(null);
+    private final MutableLiveData<String> mapSelectionTitle = new MutableLiveData<>(null);
+    private final MediatorLiveData<List<Situation>> mapSituations = new MediatorLiveData<>();
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -67,6 +72,9 @@ public class MainViewModel extends AndroidViewModel {
 
         roadNames.addSource(repository.getSituations(), this::updateRoadNames);
 
+        mapSituations.addSource(repository.getSituations(), x -> updateMap());
+        mapSituations.addSource(mapSelection, x -> updateMap());
+
         repository.startAutoUpdate();
     }
 
@@ -82,6 +90,8 @@ public class MainViewModel extends AndroidViewModel {
     public LiveData<SearchOrigin> getOrigin() { return origin; }
     public LiveData<List<Situation>> getSearchResults() { return searchResults; }
     public LiveData<List<String>> getRoadNames() { return roadNames; }
+    public LiveData<List<Situation>> getMapSituations() { return mapSituations; }
+    public LiveData<String> getMapSelectionTitle() { return mapSelectionTitle; }
 
     public void setFilter(Filter f) { filter.setValue(f); }
     public void refresh() { repository.refresh(); }
@@ -93,6 +103,22 @@ public class MainViewModel extends AndroidViewModel {
     public void setDistanceKm(int km) { distanceKm.setValue(km); }
     public void setOrigin(SearchOrigin o) { origin.setValue(o); }
     public void useDefaultOrigin() { origin.setValue(defaultOrigin()); }
+
+    public void showOnMap(List<Situation> list, String title) {
+        mapSelectionTitle.setValue(title);   // set first so the map re-zooms for the new data
+        mapSelection.setValue(new ArrayList<>(list));
+        setTab(Tab.MAP);
+    }
+
+    public void showAllOnMap() {
+        mapSelectionTitle.setValue(null);
+        mapSelection.setValue(null);
+    }
+
+    private void updateMap() {
+        List<Situation> sel = mapSelection.getValue();
+        mapSituations.setValue(sel != null ? sel : repository.getSituations().getValue());
+    }
 
     private static SearchOrigin defaultOrigin() {
         return new SearchOrigin(AppConfig.DEFAULT_LAT, AppConfig.DEFAULT_LON,
