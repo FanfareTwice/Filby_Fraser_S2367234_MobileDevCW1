@@ -1,9 +1,3 @@
-/*  Starter project for Mobile Platform Development - 1st diet 26/27
-    You should use this project as the starting point for your assignment.
-    This project simply reads the data from the required source and displays the
-    raw data in a TextField
-*/
-
 //
 // Name                 Fraser Filby
 // Student ID           S2367234
@@ -12,35 +6,31 @@
 
 package org.me.gcu.filby_fraser_s2367234;
 
-import android.graphics.Color;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.widget.Button;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+
 import org.me.gcu.filby_fraser_s2367234.data.LoadStatus;
-import org.me.gcu.filby_fraser_s2367234.model.LocationPoint;
-import org.me.gcu.filby_fraser_s2367234.model.Situation;
 import org.me.gcu.filby_fraser_s2367234.ui.MainViewModel;
+import org.me.gcu.filby_fraser_s2367234.ui.SituationListFragment;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-
+// Single activity; each screen is a fragment that shares MainViewModel
 public class MainActivity extends AppCompatActivity {
 
-    private static final int EXAMPLES_SHOWN = 3;
-
-    private TextView statusText;
-    private TextView rawDataDisplay;
     private MainViewModel viewModel;
 
     @Override
@@ -54,76 +44,48 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        statusText = findViewById(R.id.statusText);
-        rawDataDisplay = findViewById(R.id.rawDataDisplay);
-        Button refreshButton = findViewById(R.id.startButton);
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setTitle(R.string.toolbar_title);
 
-        // Data loads automatically; the button is only for a manual refresh
+        TextView statusText = findViewById(R.id.status_text);
+        LinearProgressIndicator progress = findViewById(R.id.progress);
+
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
-        refreshButton.setOnClickListener(v -> viewModel.refresh());
 
-        viewModel.getStatus().observe(this, this::showStatus);
-        viewModel.getSituations().observe(this, this::showSummary);
+        // On rotation the fragment manager restores the fragment itself
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.main_container, new SituationListFragment())
+                    .commit();
+        }
+
+        viewModel.getStatus().observe(this, status -> {
+            progress.setVisibility(status.getState() == LoadStatus.State.LOADING
+                    ? View.VISIBLE : View.GONE);
+            statusText.setText(status.getMessage());
+            int colour;
+            switch (status.getState()) {
+                case OFFLINE_CACHED: colour = R.color.status_offline; break;
+                case ERROR: colour = R.color.status_error; break;
+                default: colour = R.color.status_ok; break;
+            }
+            statusText.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, colour)));
+        });
     }
 
-    private void showStatus(LoadStatus status) {
-        statusText.setText(status.getMessage());
-        int colour;
-        switch (status.getState()) {
-            case SUCCESS: colour = Color.rgb(46, 125, 50); break;
-            case OFFLINE_CACHED: colour = Color.rgb(230, 81, 0); break;
-            case ERROR: colour = Color.rgb(198, 40, 40); break;
-            default: colour = Color.GRAY; break;
-        }
-        statusText.setBackgroundColor(colour);
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar_menu, menu);
+        return true;
     }
 
-    private void showSummary(List<Situation> situations) {
-        List<Situation> incidents = new ArrayList<>();
-        List<Situation> roadworks = new ArrayList<>();
-        for (Situation s : situations) {
-            if (s.getCategory() == Situation.Category.INCIDENT) incidents.add(s);
-            else roadworks.add(s);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_refresh) {
+            viewModel.refresh();
+            return true;
         }
-        if (situations.isEmpty()) {
-            rawDataDisplay.setText("No data yet");
-            return;
-        }
-        rawDataDisplay.setText(summarise("Unplanned events", incidents)
-                + "\n\n" + summarise("Current roadworks", roadworks));
-    }
-
-    private String summarise(String name, List<Situation> situations) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== ").append(name).append(": ").append(situations.size()).append(" ===\n");
-
-        Map<String, Integer> byType = new TreeMap<>();
-        for (Situation s : situations) {
-            byType.merge(s.getTypeLabel(), 1, Integer::sum);
-        }
-        sb.append("By type: ").append(byType).append("\n");
-
-        for (int i = 0; i < Math.min(EXAMPLES_SHOWN, situations.size()); i++) {
-            sb.append("\n").append(describe(situations.get(i)));
-        }
-        return sb.toString();
-    }
-
-    private String describe(Situation s) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("- ").append(s.getTitle()).append(" [").append(s.getRecordId()).append("]\n");
-        sb.append("  Road: ").append(s.getRoadName());
-        if (s.getDirection() != null) sb.append(" (").append(s.getDirection()).append(")");
-        sb.append("\n  ").append(s.getComment()).append("\n");
-        sb.append("  Start: ").append(s.getStartTime()).append("\n");
-        if (s.getEndTime() != null) sb.append("  End: ").append(s.getEndTime()).append("\n");
-        if (s.getImpact().getDelaysType() != null) {
-            sb.append("  Delays: ").append(s.getImpact().getDelaysType()).append("\n");
-        }
-        for (LocationPoint p : s.getLocations()) {
-            sb.append(String.format(Locale.UK, "  %s: %s (%.5f, %.5f)%n",
-                    p.getRoleLabel(), p.getDisplayName(), p.getLatitude(), p.getLongitude()));
-        }
-        return sb.toString();
+        return super.onOptionsItemSelected(item);
     }
 }

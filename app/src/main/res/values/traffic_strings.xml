@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="toolbar_title">Scotland Road Watch</string>
+    <string name="refresh">Refresh</string>
+
+    <string name="filter_all_plain">All</string>
+    <string name="filter_incidents_plain">Incidents</string>
+    <string name="filter_roadworks_plain">Roadworks</string>
+    <string name="filter_all">All (%1$d)</string>
+    <string name="filter_incidents">Incidents (%1$d)</string>
+    <string name="filter_roadworks">Roadworks (%1$d)</string>
+
+    <string name="legend_title">Roadworks delays:</string>
+    <string name="legend_long">Long</string>
+    <string name="legend_delays">Delays</string>
+    <string name="legend_none">None reported</string>
+    <string name="empty_list">No situations to show.\nTap refresh to try again.</string>
+    <string name="acknowledgement">Contains Traffic Scotland data</string>
+</resources>

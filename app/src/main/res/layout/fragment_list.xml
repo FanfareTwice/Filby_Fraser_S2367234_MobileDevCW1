@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/filter_chips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            app:selectionRequired="true"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_all"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/filter_all_plain" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_incidents"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/filter_incidents_plain" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_roadworks"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/filter_roadworks_plain" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <!-- colour key for roadworks delays -->
+    <LinearLayout
+        android:id="@+id/delay_legend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:paddingBottom="6dp">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/legend_title"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textStyle="bold" />
+        <View android:layout_width="12dp" android:layout_height="12dp"
+            android:layout_marginStart="10dp" android:background="@drawable/circle_bg"
+            android:backgroundTint="@color/delay_long" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="4dp" android:text="@string/legend_long"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
+        <View android:layout_width="12dp" android:layout_height="12dp"
+            android:layout_marginStart="10dp" android:background="@drawable/circle_bg"
+            android:backgroundTint="@color/delay_medium" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="4dp" android:text="@string/legend_delays"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
+        <View android:layout_width="12dp" android:layout_height="12dp"
+            android:layout_marginStart="10dp" android:background="@drawable/circle_bg"
+            android:backgroundTint="@color/delay_none" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="4dp" android:text="@string/legend_none"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp" />
+
+        <TextView
+            android:id="@+id/empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="24dp"
+            android:gravity="center"
+            android:text="@string/empty_list"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

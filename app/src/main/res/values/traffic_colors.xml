@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#1A4D8F</color>
+    <color name="brand_on_primary">#FFFFFF</color>
+
+    <!-- situation types (icon background) -->
+    <color name="type_closure">#C62828</color>
+    <color name="type_lanes">#6D4C41</color>
+    <color name="type_signals">#00897B</color>
+    <color name="type_queue">#AD1457</color>
+    <color name="type_vehicle">#6A1B9A</color>
+    <color name="type_weather">#0277BD</color>
+    <color name="type_roadworks">#EF6C00</color>
+    <color name="type_hazard">#D84315</color>
+    <color name="type_other">#546E7A</color>
+
+    <!-- roadworks delay colour coding -->
+    <color name="delay_long">#D32F2F</color>
+    <color name="delay_medium">#F9A825</color>
+    <color name="delay_short">#7CB342</color>
+    <color name="delay_none">#2E7D32</color>
+
+    <!-- status bar -->
+    <color name="status_ok">#2E7D32</color>
+    <color name="status_offline">#E65100</color>
+    <color name="status_error">#C62828</color>
+</resources>
