@@ -27,6 +27,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import org.me.gcu.filby_fraser_s2367234.data.SituationXmlParser;
+import org.me.gcu.filby_fraser_s2367234.model.LocationPoint;
+import org.me.gcu.filby_fraser_s2367234.model.Situation;
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,12 +39,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 public class MainActivity extends AppCompatActivity implements OnClickListener {
     private static final String TAG = "MainActivity";
-    private static final int PREVIEW_LENGTH = 3000;
+    private static final int EXAMPLES_SHOWN = 3;
 
+    private final SituationXmlParser parser = new SituationXmlParser();
     private TextView rawDataDisplay;
     private Button startButton;
 
@@ -95,25 +105,57 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         @Override
         public void run() {
             StringBuilder display = new StringBuilder();
-            display.append(describe("Unplanned events", UNPLANNED_EVENTS_URL));
+            display.append(summarise("Unplanned events", UNPLANNED_EVENTS_URL, Situation.Category.INCIDENT));
             display.append("\n\n");
-            display.append(describe("Current roadworks", ROADWORKS_URL));
+            display.append(summarise("Current roadworks", ROADWORKS_URL, Situation.Category.ROADWORKS));
 
             // Temporary - replaced with a ViewModel and LiveData in a later stage
             MainActivity.this.runOnUiThread(() -> rawDataDisplay.setText(display.toString()));
         }
 
-        private String describe(String name, String address) {
+        private String summarise(String name, String address, Situation.Category category) {
+            List<Situation> situations;
             try {
-                String xml = download(address);
-                String preview = xml.length() > PREVIEW_LENGTH
-                        ? xml.substring(0, PREVIEW_LENGTH) + "\n..."
-                        : xml;
-                return "=== " + name + " (" + xml.length() + " characters) ===\n" + preview;
+                situations = parser.parse(download(address), category);
             } catch (IOException e) {
                 Log.e(TAG, "Download failed: " + address, e);
                 return "=== " + name + " ===\nDownload failed: " + e.getMessage();
+            } catch (XmlPullParserException e) {
+                Log.e(TAG, "Parsing failed: " + address, e);
+                return "=== " + name + " ===\nCould not parse the data: " + e.getMessage();
             }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("=== ").append(name).append(": ").append(situations.size()).append(" ===\n");
+
+            Map<String, Integer> byType = new TreeMap<>();
+            for (Situation s : situations) {
+                byType.merge(s.getTypeLabel(), 1, Integer::sum);
+            }
+            sb.append("By type: ").append(byType).append("\n");
+
+            for (int i = 0; i < Math.min(EXAMPLES_SHOWN, situations.size()); i++) {
+                sb.append("\n").append(describe(situations.get(i)));
+            }
+            return sb.toString();
+        }
+
+        private String describe(Situation s) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("- ").append(s.getTitle()).append(" [").append(s.getRecordId()).append("]\n");
+            sb.append("  Road: ").append(s.getRoadName());
+            if (s.getDirection() != null) sb.append(" (").append(s.getDirection()).append(")");
+            sb.append("\n  ").append(s.getComment()).append("\n");
+            sb.append("  Start: ").append(s.getStartTime()).append("\n");
+            if (s.getEndTime() != null) sb.append("  End: ").append(s.getEndTime()).append("\n");
+            if (s.getImpact().getDelaysType() != null) {
+                sb.append("  Delays: ").append(s.getImpact().getDelaysType()).append("\n");
+            }
+            for (LocationPoint p : s.getLocations()) {
+                sb.append(String.format(Locale.UK, "  %s: %s (%.5f, %.5f)%n",
+                        p.getRoleLabel(), p.getDisplayName(), p.getLatitude(), p.getLongitude()));
+            }
+            return sb.toString();
         }
     }
 
