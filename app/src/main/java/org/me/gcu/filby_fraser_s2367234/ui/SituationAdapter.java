@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
+
 import org.me.gcu.filby_fraser_s2367234.R;
 import org.me.gcu.filby_fraser_s2367234.model.Situation;
 
@@ -25,10 +27,17 @@ public class SituationAdapter extends ListAdapter<Situation, SituationAdapter.Ho
     public interface OnSituationClick { void onClick(Situation s); }
 
     private final OnSituationClick listener;
+    private String selectedKey;
 
     public SituationAdapter(OnSituationClick listener) {
         super(DIFF);
         this.listener = listener;
+    }
+
+    public void setSelectedKey(String key) {
+        if (Objects.equals(key, selectedKey)) return;
+        selectedKey = key;
+        notifyItemRangeChanged(0, getItemCount());
     }
 
     public void submit(List<Situation> list) {
@@ -65,6 +74,11 @@ public class SituationAdapter extends ListAdapter<Situation, SituationAdapter.Ho
             meta.add("Since " + SituationStyle.formatTime(s.getStartTime()));
         }
         h.meta.setText(String.join("  •  ", meta));
+
+        // Outline the card whose details are open
+        float density = c.getResources().getDisplayMetrics().density;
+        ((MaterialCardView) h.itemView).setStrokeWidth(
+                s.getKey().equals(selectedKey) ? Math.round(2 * density) : 0);
 
         h.itemView.setContentDescription(s.getTitle() + ". " + h.comment.getText());
         h.itemView.setOnClickListener(v -> listener.onClick(s));

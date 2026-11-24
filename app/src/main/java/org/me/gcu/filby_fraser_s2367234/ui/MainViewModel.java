@@ -25,6 +25,7 @@ public class MainViewModel extends AndroidViewModel {
 
     private final MutableLiveData<Filter> filter = new MutableLiveData<>(Filter.ALL);
     private final MediatorLiveData<List<Situation>> filteredSituations = new MediatorLiveData<>();
+    private final MediatorLiveData<Situation> selected = new MediatorLiveData<>();
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -33,6 +34,18 @@ public class MainViewModel extends AndroidViewModel {
         filteredSituations.addSource(repository.getSituations(), list -> updateFiltered());
         filteredSituations.addSource(filter, f -> updateFiltered());
 
+        // After a refresh, show the updated version of the selected situation
+        selected.addSource(repository.getSituations(), list -> {
+            Situation current = selected.getValue();
+            if (current == null || list == null) return;
+            for (Situation s : list) {
+                if (s.getKey().equals(current.getKey())) {
+                    selected.setValue(s);
+                    return;
+                }
+            }
+        });
+
         repository.startAutoUpdate();
     }
 
@@ -40,9 +53,12 @@ public class MainViewModel extends AndroidViewModel {
     public LiveData<List<Situation>> getFilteredSituations() { return filteredSituations; }
     public LiveData<Filter> getFilter() { return filter; }
     public LiveData<LoadStatus> getStatus() { return repository.getStatus(); }
+    public LiveData<Situation> getSelected() { return selected; }
 
     public void setFilter(Filter f) { filter.setValue(f); }
     public void refresh() { repository.refresh(); }
+    public void select(Situation s) { selected.setValue(s); }
+    public void clearSelection() { selected.setValue(null); }
 
     private void updateFiltered() {
         List<Situation> all = repository.getSituations().getValue();

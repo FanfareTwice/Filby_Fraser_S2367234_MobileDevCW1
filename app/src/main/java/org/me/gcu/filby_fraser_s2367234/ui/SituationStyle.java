@@ -89,6 +89,12 @@ public final class SituationStyle {
         return t.atZoneSameInstant(ZoneId.of("Europe/London")).format(DATE_TIME);
     }
 
+    public static String formatDelaySeconds(Integer secs) {
+        if (secs == null) return null;
+        if (secs < 60) return secs + " s";
+        return formatDuration(Duration.ofSeconds(secs));
+    }
+
     public static String formatDuration(Duration d) {
         if (d == null) return null;
         if (d.isNegative()) return "Ended";

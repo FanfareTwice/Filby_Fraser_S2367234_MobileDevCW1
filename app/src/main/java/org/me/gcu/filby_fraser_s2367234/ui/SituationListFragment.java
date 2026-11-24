@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,9 +42,7 @@ public class SituationListFragment extends Fragment {
         Chip chipRoadworks = view.findViewById(R.id.chip_roadworks);
         View legend = view.findViewById(R.id.delay_legend);
 
-        // Details screen is added in the next stage
-        SituationAdapter adapter = new SituationAdapter(s ->
-                Toast.makeText(requireContext(), s.getTitle(), Toast.LENGTH_SHORT).show());
+        SituationAdapter adapter = new SituationAdapter(vm::select);
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         recycler.setAdapter(adapter);
 
@@ -79,6 +76,9 @@ public class SituationListFragment extends Fragment {
             adapter.submit(list);
             empty.setVisibility(list == null || list.isEmpty() ? View.VISIBLE : View.GONE);
         });
+
+        vm.getSelected().observe(getViewLifecycleOwner(), s ->
+                adapter.setSelectedKey(s == null ? null : s.getKey()));
 
         // The colour key only applies to roadworks
         vm.getFilter().observe(getViewLifecycleOwner(), f ->

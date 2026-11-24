@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -25,6 +26,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.me.gcu.filby_fraser_s2367234.data.LoadStatus;
+import org.me.gcu.filby_fraser_s2367234.ui.DetailFragment;
 import org.me.gcu.filby_fraser_s2367234.ui.MainViewModel;
 import org.me.gcu.filby_fraser_s2367234.ui.SituationListFragment;
 
@@ -57,8 +59,27 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.main_container, new SituationListFragment())
+                    .replace(R.id.detail_container, new DetailFragment())
                     .commit();
         }
+
+        // In portrait the details cover the list, so Back closes them first
+        boolean twoPane = getResources().getBoolean(R.bool.two_pane);
+        View detailContainer = findViewById(R.id.detail_container);
+        OnBackPressedCallback closeDetails = new OnBackPressedCallback(false) {
+            @Override
+            public void handleOnBackPressed() {
+                viewModel.clearSelection();
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, closeDetails);
+
+        viewModel.getSelected().observe(this, s -> {
+            if (!twoPane) {
+                detailContainer.setVisibility(s != null ? View.VISIBLE : View.GONE);
+                closeDetails.setEnabled(s != null);
+            }
+        });
 
         viewModel.getStatus().observe(this, status -> {
             progress.setVisibility(status.getState() == LoadStatus.State.LOADING

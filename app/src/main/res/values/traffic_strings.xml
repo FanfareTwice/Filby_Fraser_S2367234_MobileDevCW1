@@ -16,4 +16,7 @@
     <string name="legend_none">None reported</string>
     <string name="empty_list">No situations to show.\nTap refresh to try again.</string>
     <string name="acknowledgement">Contains Traffic Scotland data</string>
+
+    <string name="detail_placeholder">Select a situation to see its details</string>
+    <string name="close">Close</string>
 </resources>
