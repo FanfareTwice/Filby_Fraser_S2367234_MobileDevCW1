@@ -7,12 +7,13 @@
 //
 // Name                 Fraser Filby
 // Student ID           S2367234
-// Programme of Study   Software Development
+// Programme of Study   _________________
 //
 
-// UPDATE THE PACKAGE NAME to include your Student Identifier
 package org.me.gcu.filby_fraser_s2367234;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -26,27 +27,29 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
 import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 
 public class MainActivity extends AppCompatActivity implements OnClickListener {
+    private static final String TAG = "MainActivity";
+    private static final int PREVIEW_LENGTH = 3000;
+
     private TextView rawDataDisplay;
     private Button startButton;
 
-    //DOWNLOADING FROM TRAFFIC SCOTLAND
-    final String clientId = "YOUR_ID_HERE";
-    final String clientKey = "YOUR_KEY_HERE";
-    final String unplannedEventsURL = "https://datex2.trafficscotland.org/rest/2.3/publications/UnplannedEvents/Content.xml";
+    // Read from local.properties via the manifest, so they are not in the source code
+    private String clientId;
+    private String clientKey;
+
+    private static final String BASE_URL = "https://datex2.trafficscotland.org/rest/2.3/publications/";
+    private static final String UNPLANNED_EVENTS_URL = BASE_URL + "UnplannedEvents/Content.xml";
+    private static final String ROADWORKS_URL = BASE_URL + "CurrentRoadworks/Content.xml";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,95 +61,87 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        // Set up the raw links to the graphical components
-        rawDataDisplay = (TextView)findViewById(R.id.rawDataDisplay);
-        startButton = (Button)findViewById(R.id.startButton);
+
+        rawDataDisplay = findViewById(R.id.rawDataDisplay);
+        startButton = findViewById(R.id.startButton);
         startButton.setOnClickListener(this);
 
-        // More Code goes here
-
+        clientId = readKey("TRAFFIC_CLIENT_ID");
+        clientKey = readKey("TRAFFIC_CLIENT_KEY");
     }
 
-    public void onClick(View aview)
-    {
+    private String readKey(String name) {
+        try {
+            ApplicationInfo info = getPackageManager()
+                    .getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+            Object value = info.metaData == null ? null : info.metaData.get(getPackageName() + "." + name);
+            return value == null ? "" : String.valueOf(value);
+        } catch (PackageManager.NameNotFoundException e) {
+            return "";
+        }
+    }
+
+    public void onClick(View aview) {
         startProgress();
     }
 
-    public void startProgress()
-    {
-        // Run network access on a separate thread;
-        new Thread(new Task(unplannedEventsURL)).start();
-    } //
-
-    // Need separate thread to access the internet resource over network
-    // Other neater solutions should be adopted in later iterations.
-    private class Task implements Runnable
-    {
-        private String result="";
-        private String myurl;
-        BufferedReader in = null;
-        String inputLine = "";
-        public Task(String aurl){
-            myurl = aurl;
-        }
-        @Override
-        public void run(){
-            Log.d("MyTask","in run");
-            try {
-                URL url = new URL(myurl);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                //ADD AUTHORISATION (string with clientIID:clientKey)
-                urlConnection.setRequestProperty("Authorization",Base64.getEncoder().encodeToString((clientId + ":" + clientKey).getBytes()));
-                try {
-                    in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                    while ((inputLine = in.readLine()) != null){
-                        result = result + inputLine;
-                    }
-                    in.close();
-                } catch (IOException e) {
-                    String error = urlConnection.getErrorStream().toString();
-                    Log.e("urlConnection", "ioexception");
-                }
-                finally {
-                    urlConnection.disconnect();
-                }
-            } catch (IOException e) {
-                Log.e("URL", "ioexception");
-            }
-
-            //Clean up any leading garbage characters
-            int i = result.indexOf("<?"); //initial tag
-            result = result.substring(i);
-
-            // Now that you have the xml data into result, you can parse it
-            try {
-                XmlPullParserFactory factory =
-                        XmlPullParserFactory.newInstance();
-                factory.setNamespaceAware(true);
-                XmlPullParser xpp = factory.newPullParser();
-                xpp.setInput( new StringReader( result ) );
-
-                //YOUR PARSING HERE!!!
-
-
-            } catch (XmlPullParserException e) {
-                Log.e("Parsing","EXCEPTION" + e);
-                //throw new RuntimeException(e);
-            }
-
-            // Now update the TextView to display raw XML data
-            // Probably not the best way to update TextView
-            // but we are just getting started !
-
-            MainActivity.this.runOnUiThread(new Runnable()
-            {
-                public void run() {
-                    Log.d("UI thread", "I am the UI thread");
-                    rawDataDisplay.setText(result);
-                }
-            });
-        }
-
+    public void startProgress() {
+        rawDataDisplay.setText("Downloading...");
+        // Network access must not run on the UI thread
+        new Thread(new Task()).start();
     }
 
+    private class Task implements Runnable {
+        @Override
+        public void run() {
+            StringBuilder display = new StringBuilder();
+            display.append(describe("Unplanned events", UNPLANNED_EVENTS_URL));
+            display.append("\n\n");
+            display.append(describe("Current roadworks", ROADWORKS_URL));
+
+            // Temporary - replaced with a ViewModel and LiveData in a later stage
+            MainActivity.this.runOnUiThread(() -> rawDataDisplay.setText(display.toString()));
+        }
+
+        private String describe(String name, String address) {
+            try {
+                String xml = download(address);
+                String preview = xml.length() > PREVIEW_LENGTH
+                        ? xml.substring(0, PREVIEW_LENGTH) + "\n..."
+                        : xml;
+                return "=== " + name + " (" + xml.length() + " characters) ===\n" + preview;
+            } catch (IOException e) {
+                Log.e(TAG, "Download failed: " + address, e);
+                return "=== " + name + " ===\nDownload failed: " + e.getMessage();
+            }
+        }
+    }
+
+    private String download(String address) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(address).openConnection();
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(30000);
+        String credentials = clientId + ":" + clientKey;
+        connection.setRequestProperty("Authorization",
+                Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8)));
+        try {
+            int code = connection.getResponseCode();
+            if (code != HttpURLConnection.HTTP_OK) {
+                throw new IOException("HTTP " + code + " " + connection.getResponseMessage());
+            }
+            StringBuilder result = new StringBuilder();
+            try (BufferedReader in = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    result.append(line).append('\n');
+                }
+            }
+            // Remove anything before the XML declaration
+            int start = result.indexOf("<?");
+            return start > 0 ? result.substring(start) : result.toString();
+        } finally {
+            connection.disconnect();
+        }
+    }
 }
